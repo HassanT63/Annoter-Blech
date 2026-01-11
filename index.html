@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Annoter Blech v17</title>
+<title>Annoter Blech v18</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
@@ -39,6 +39,22 @@
 
         .btn-save { background: #34c759 !important; height: 34px !important; flex: 0.7 !important; font-size: 10px !important; }
 
+        /* Fenêtre de sauvegarde (Pop-up) */
+
+        #saveModal { 
+
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+
+            background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;
+
+        }
+
+        #saveModal img { max-width: 90%; max-height: 70%; border: 2px solid white; border-radius: 10px; }
+
+        #saveModal p { margin-top: 20px; text-align: center; padding: 0 20px; font-weight: bold; }
+
+        #saveModal button { margin-top: 20px; padding: 10px 20px; background: #ff3b30; color: white; border: none; border-radius: 5px; }
+
         .canvas-container { flex: 1; width: 100%; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
         canvas { touch-action: none; }
@@ -67,14 +83,19 @@
 </select>
 <input type="range" id="sizeMain" min="2" max="40" value="8" oninput="updateSelectedStyle()">
 <button class="btn-del" onclick="deleteObj()">🗑️</button>
-<button class="btn-save" onclick="download()">💾 SAUVER</button>
+<button class="btn-save" onclick="saveLogic()">💾 SAUVER</button>
 </div>
 </div>
 <div class="canvas-container" id="wrapper"><canvas id="c"></canvas></div>
 <input type="file" id="upload" style="display:none" accept="image/*">
+<div id="saveModal">
+<img id="resultImage" src="">
+<p>📱 Maintenez votre doigt sur l'image ci-dessus <br> puis choisissez <b>"Enregistrer dans Photos"</b></p>
+<button onclick="closeModal()">RETOUR</button>
+</div>
 <script>
 
-    let canvas = new fabric.Canvas('c', { stopPropagation: true, preserveObjectStacking: true, selection: true });
+    let canvas = new fabric.Canvas('c', { stopPropagation: true, preserveObjectStacking: true });
 
     let mode = 'select', isDrawing = false, arrow, line, customText = "";
 
@@ -132,13 +153,9 @@
 
             if (obj.type === 'group') {
 
-                // On change l'épaisseur du trait (strokeWidth) au lieu de l'échelle (scale)
-
                 obj.item(0).set({ stroke: color, strokeWidth: thickness });
 
                 obj.item(1).set({ fill: color, width: thickness * 4, height: thickness * 4 });
-
-                // Reset scale pour éviter le flou/zoom
 
                 obj.set({ scaleX: 1, scaleY: 1 });
 
@@ -262,21 +279,45 @@
 
     }
 
-    function download() {
+    function saveLogic() {
 
         canvas.discardActiveObject();
 
         canvas.renderAll();
 
-        // Sur iOS, on ouvre l'image dans un nouvel onglet pour que l'utilisateur puisse faire "Enregistrer l'image"
-
         const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
 
-        const win = window.open();
+        // Détection si iOS (iPhone/iPad)
 
-        win.document.write('<img src="' + dataURL + '" style="width:100%; height:auto;">');
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        win.document.write('<h1 style="font-family:sans-serif; text-align:center;">Maintenez le doigt sur l\'image pour "Enregistrer dans Photos"</h1>');
+        if (isIOS) {
+
+            // Sur iPhone, on affiche la Pop-up
+
+            document.getElementById('resultImage').src = dataURL;
+
+            document.getElementById('saveModal').style.display = 'flex';
+
+        } else {
+
+            // Sur Android/PC, on télécharge direct
+
+            const link = document.createElement('a');
+
+            link.download = 'chantier_' + new Date().getTime() + '.png';
+
+            link.href = dataURL;
+
+            link.click();
+
+        }
+
+    }
+
+    function closeModal() {
+
+        document.getElementById('saveModal').style.display = 'none';
 
     }
 </script>
