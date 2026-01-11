@@ -3,37 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Annoter Blech PRO</title>
+<title>Annoter Blech v5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
-        body { font-family: sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; touch-action: none; }
+        body { font-family: sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* Toolbar version chantier : Gros boutons */
+        /* Toolbar fine mais large pour les doigts */
 
-        .toolbar { background: #222; display: grid; grid-template-columns: repeat(4, 1-fr); gap: 5px; padding: 10px; border-bottom: 3px solid #444; }
+        .toolbar { background: #222; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; border-bottom: 2px solid #444; }
 
-        button { background: #333; border: 1px solid #555; color: white; height: 60px; font-size: 18px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        button { background: #333; border: 1px solid #555; color: white; height: 45px; font-size: 14px; border-radius: 4px; font-weight: bold; }
 
-        button.active { background: #007bff; border-color: #fff; border-width: 2px; }
+        button.active { background: #007bff; border-color: #fff; }
 
-        .controls { background: #2c2c2c; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        /* Réglages compacts sur une ligne */
 
-        .control-row { display: flex; align-items: center; gap: 15px; }
+        .controls { background: #2c2c2c; padding: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; }
 
-        label { min-width: 80px; font-weight: bold; font-size: 14px; }
+        .control-group { display: flex; align-items: center; gap: 5px; flex: 1; }
 
-        input[type="range"] { flex-grow: 1; height: 30px; }
+        input[type="range"] { width: 100%; height: 20px; }
 
-        input[type="color"] { width: 60px; height: 60px; border-radius: 8px; border: none; background: none; }
+        input[type="color"] { width: 35px; height: 35px; border: none; background: none; padding: 0; }
 
-        .canvas-container { flex-grow: 1; position: relative; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        .canvas-container { flex-grow: 1; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
-        canvas { touch-action: none; }
+        .footer-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 5px; padding: 5px; background: #222; }
 
-        .btn-save { background: #28a745; grid-column: span 2; }
+        .btn-del { background: #dc3545; height: 40px; }
 
-        .btn-del { background: #dc3545; }
+        .btn-save { background: #28a745; height: 40px; }
 </style>
 </head>
 <body>
@@ -45,23 +45,22 @@
 <input type="file" id="upload" style="display:none" accept="image/*">
 </div>
 <div class="controls">
-<div class="control-row">
-<label>Couleur</label>
 <input type="color" id="colorPicker" value="#ff0000">
-<button class="btn-del" onclick="deleteObj()" style="flex-grow:1; height: 50px;">🗑️ Effacer sélection</button>
+<div class="control-group">
+<span>📏</span>
+<input type="range" id="sizeArrow" min="3" max="25" value="6">
 </div>
-<div class="control-row">
-<label>Épaisseur</label>
-<input type="range" id="sizeArrow" min="3" max="30" value="8">
+<div class="control-group">
+<span>Taille A</span>
+<input type="range" id="sizeText" min="20" max="120" value="40">
 </div>
-<div class="control-row">
-<label>Taille Texte</label>
-<input type="range" id="sizeText" min="20" max="150" value="50">
-</div>
-<button class="btn-save" onclick="download()">💾 SAUVEGARDER L'IMAGE</button>
 </div>
 <div class="canvas-container">
 <canvas id="c"></canvas>
+</div>
+<div class="footer-actions">
+<button class="btn-del" onclick="deleteObj()">🗑️ Suppr.</button>
+<button class="btn-save" onclick="download()">💾 SAUVEGARDER</button>
 </div>
 <script>
 
@@ -101,7 +100,9 @@
 
             fabric.Image.fromURL(f.target.result, function(img) {
 
-                const ratio = Math.min((window.innerWidth)/img.width, (window.innerHeight * 0.6)/img.height);
+                const availableHeight = window.innerHeight - 160; 
+
+                const ratio = Math.min(window.innerWidth / img.width, availableHeight / img.height);
 
                 canvas.setDimensions({ width: img.width * ratio, height: img.height * ratio });
 
@@ -141,7 +142,7 @@
 
             let textSize = parseInt(document.getElementById('sizeText').value);
 
-            let text = new fabric.IText('À RÉPARER', { left: pointer.x, top: pointer.y, fill: color, fontSize: textSize, fontFamily: 'Arial', fontWeight: 'bold' });
+            let text = new fabric.IText('NOTES', { left: pointer.x, top: pointer.y, fill: color, fontSize: textSize, fontFamily: 'Arial', fontWeight: 'bold' });
 
             canvas.add(text);
 
@@ -201,7 +202,7 @@
 
         const link = document.createElement('a');
 
-        link.download = 'chantier-blech.png';
+        link.download = 'annoter-blech.png';
 
         link.href = dataURL;
 
