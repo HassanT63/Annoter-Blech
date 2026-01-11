@@ -2,14 +2,36 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Annoter Blech v10</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Annoter Blech v11</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
-        body { font-family: sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        /* On crée une zone tampon en haut pour éviter l'encoche iPhone */
 
-        /* HEADER ULTRA COMPACT */
+        body { 
+
+            font-family: sans-serif; 
+
+            background: #121212; 
+
+            color: white; 
+
+            margin: 0; 
+
+            display: flex; 
+
+            flex-direction: column; 
+
+            height: 100vh; 
+
+            padding-top: 40px; /* MARGE DE SÉCURITÉ POUR L'ENCOCHE */
+
+            box-sizing: border-box;
+
+            overflow: hidden; 
+
+        }
 
         .header-ui { 
 
@@ -17,55 +39,77 @@
 
             border-bottom: 2px solid #444; 
 
-            padding: 5px;
+            padding: 8px;
 
-            padding-top: env(safe-area-inset-top, 5px); /* Protection encoche iPhone */
+            display: flex;
 
-            z-index: 100;
+            flex-direction: column;
 
-        }
-
-        .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
-
-        .row-mixed { display: flex; align-items: center; gap: 8px; }
-
-        button { 
-
-            background: #333; border: 1px solid #555; color: white; 
-
-            height: 40px; font-size: 12px; border-radius: 5px; 
-
-            font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent;
+            gap: 8px;
 
         }
 
-        button.active { background: #007bff; border-color: #fff; }
+        .row { display: flex; gap: 5px; width: 100%; }
 
-        input[type="range"] { flex: 1; height: 20px; }
+        .row button { flex: 1; height: 50px; font-size: 14px; font-weight: bold; border-radius: 8px; border: 1px solid #555; background: #333; color: white; }
 
-        input[type="color"] { width: 35px; height: 35px; border: none; background: none; padding: 0; flex-shrink: 0; }
+        button.active { background: #007bff; border-color: white; }
 
-        .btn-del { background: #dc3545; border: none; padding: 0 10px; font-size: 11px; white-space: nowrap; }
+        .settings-bar { 
 
-        .btn-save { background: #28a745; border: none; padding: 0 10px; font-size: 11px; white-space: nowrap; flex-grow: 1; }
+            display: flex; 
 
-        /* ZONE IMAGE MAXIMISÉE */
+            align-items: center; 
 
-        .canvas-container { flex: 1; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+            gap: 10px; 
+
+            background: #2c2c2c; 
+
+            padding: 8px; 
+
+            border-radius: 8px;
+
+        }
+
+        input[type="range"] { flex: 1; height: 30px; }
+
+        input[type="color"] { width: 45px; height: 45px; border: none; background: none; }
+
+        .btn-del { background: #dc3545 !important; border: none !important; }
+
+        .btn-save { background: #28a745 !important; border: none !important; flex: 2 !important; }
+
+        .canvas-container { 
+
+            flex: 1; 
+
+            background: #000; 
+
+            display: flex; 
+
+            justify-content: center; 
+
+            align-items: center; 
+
+            overflow: hidden;
+
+            position: relative;
+
+        }
 </style>
 </head>
 <body>
 <div class="header-ui">
 <div class="row">
-<button onclick="document.getElementById('upload').click()">📁 Photo</button>
-<button id="btn-select" class="active" onclick="setMode('select')">🖱️ Bouger</button>
-<button id="btn-arrow" onclick="setMode('arrow')">↗️ Flèche</button>
-<button id="btn-text" onclick="setMode('text')">A| Texte</button>
+<button onclick="document.getElementById('upload').click()">📁 PHOTO</button>
+<button id="btn-select" class="active" onclick="setMode('select')">🖱️ BOUGER</button>
+<button id="btn-arrow" onclick="setMode('arrow')">↗️ FLÈCHE</button>
+<button id="btn-text" onclick="setMode('text')">A| TEXTE</button>
 </div>
-<div class="row-mixed">
+<div class="settings-bar">
 <input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedStyle()">
-<input type="range" id="sizeMain" min="4" max="50" value="10" oninput="updateSelectedStyle()">
-<button class="btn-del" onclick="deleteObj()">🗑️ SUPPR</button>
+<input type="range" id="sizeMain" min="4" max="60" value="12" oninput="updateSelectedStyle()">
+<button class="btn-del" onclick="deleteObj()">🗑️</button>
 <button class="btn-save" onclick="download()">💾 SAUVER</button>
 </div>
 </div>
@@ -97,7 +141,7 @@
 
         });
 
-        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.row button').forEach(b => b.classList.remove('active'));
 
         if(document.getElementById('btn-'+m)) document.getElementById('btn-'+m).classList.add('active');
 
@@ -139,9 +183,9 @@
 
             fabric.Image.fromURL(f.target.result, function(img) {
 
-                const headerH = document.querySelector('.header-ui').offsetHeight;
+                const headH = document.querySelector('.header-ui').offsetHeight;
 
-                const availableHeight = window.innerHeight - headerH - 10;
+                const availableHeight = window.innerHeight - headH - 60;
 
                 const ratio = Math.min(window.innerWidth / img.width, availableHeight / img.height);
 
