@@ -2,14 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Annoter Blech v9</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Annoter Blech v10</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
         body { font-family: sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* TOUT LE BLOC DE CONTRÔLE EN HAUT */
+        /* HEADER ULTRA COMPACT */
 
         .header-ui { 
 
@@ -17,29 +17,23 @@
 
             border-bottom: 2px solid #444; 
 
-            display: flex; 
-
-            flex-direction: column;
-
-            gap: 5px;
-
             padding: 5px;
+
+            padding-top: env(safe-area-inset-top, 5px); /* Protection encoche iPhone */
 
             z-index: 100;
 
         }
 
-        .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 4px; }
 
-        .row-settings { display: flex; align-items: center; gap: 10px; background: #2c2c2c; padding: 5px 10px; border-radius: 5px; }
-
-        .row-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 5px; }
+        .row-mixed { display: flex; align-items: center; gap: 8px; }
 
         button { 
 
             background: #333; border: 1px solid #555; color: white; 
 
-            height: 45px; font-size: 13px; border-radius: 6px; 
+            height: 40px; font-size: 12px; border-radius: 5px; 
 
             font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent;
 
@@ -47,31 +41,17 @@
 
         button.active { background: #007bff; border-color: #fff; }
 
-        input[type="range"] { flex: 1; height: 30px; }
+        input[type="range"] { flex: 1; height: 20px; }
 
-        input[type="color"] { width: 35px; height: 35px; border: none; background: none; padding: 0; }
+        input[type="color"] { width: 35px; height: 35px; border: none; background: none; padding: 0; flex-shrink: 0; }
 
-        .btn-del { background: #dc3545; border: none; }
+        .btn-del { background: #dc3545; border: none; padding: 0 10px; font-size: 11px; white-space: nowrap; }
 
-        .btn-save { background: #28a745; border: none; font-size: 14px; }
+        .btn-save { background: #28a745; border: none; padding: 0 10px; font-size: 11px; white-space: nowrap; flex-grow: 1; }
 
-        /* ZONE IMAGE */
+        /* ZONE IMAGE MAXIMISÉE */
 
-        .canvas-container { 
-
-            flex: 1; 
-
-            background: #000; 
-
-            display: flex; 
-
-            justify-content: center; 
-
-            align-items: center; 
-
-            overflow: hidden; 
-
-        }
+        .canvas-container { flex: 1; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -82,14 +62,11 @@
 <button id="btn-arrow" onclick="setMode('arrow')">↗️ Flèche</button>
 <button id="btn-text" onclick="setMode('text')">A| Texte</button>
 </div>
-<div class="row-settings">
+<div class="row-mixed">
 <input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedStyle()">
-<span style="font-size: 20px;">📏</span>
 <input type="range" id="sizeMain" min="4" max="50" value="10" oninput="updateSelectedStyle()">
-</div>
-<div class="row-actions">
-<button class="btn-del" onclick="deleteObj()">🗑️ SUPPRIMER</button>
-<button class="btn-save" onclick="download()">💾 SAUVEGARDER L'IMAGE</button>
+<button class="btn-del" onclick="deleteObj()">🗑️ SUPPR</button>
+<button class="btn-save" onclick="download()">💾 SAUVER</button>
 </div>
 </div>
 <div class="canvas-container">
@@ -270,7 +247,7 @@
 
         const link = document.createElement('a');
 
-        link.download = 'annoter-blech.png';
+        link.download = 'chantier.png';
 
         link.href = dataURL;
 
