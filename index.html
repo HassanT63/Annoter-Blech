@@ -2,46 +2,70 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Annoter Blech V3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Annoter Blech PRO</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; touch-action: none; }
 
-        .toolbar { background: #2c2c2c; padding: 10px; display: flex; justify-content: center; gap: 15px; align-items: center; border-bottom: 2px solid #444; }
+        /* Toolbar version chantier : Gros boutons */
 
-        button { background: #444; border: none; color: white; padding: 10px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .toolbar { background: #222; display: grid; grid-template-columns: repeat(4, 1-fr); gap: 5px; padding: 10px; border-bottom: 3px solid #444; }
 
-        button.active { background: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+        button { background: #333; border: 1px solid #555; color: white; height: 60px; font-size: 18px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-        input[type="color"] { border: none; width: 40px; height: 40px; cursor: pointer; background: none; }
+        button.active { background: #007bff; border-color: #fff; border-width: 2px; }
 
-        .canvas-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #000; overflow: auto; }
+        .controls { background: #2c2c2c; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
 
-        .instr { position: fixed; bottom: 10px; width: 100%; text-align: center; color: #666; font-size: 13px; }
+        .control-row { display: flex; align-items: center; gap: 15px; }
+
+        label { min-width: 80px; font-weight: bold; font-size: 14px; }
+
+        input[type="range"] { flex-grow: 1; height: 30px; }
+
+        input[type="color"] { width: 60px; height: 60px; border-radius: 8px; border: none; background: none; }
+
+        .canvas-container { flex-grow: 1; position: relative; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+
+        canvas { touch-action: none; }
+
+        .btn-save { background: #28a745; grid-column: span 2; }
+
+        .btn-del { background: #dc3545; }
 </style>
 </head>
 <body>
 <div class="toolbar">
-<input type="file" id="upload" style="display:none" accept="image/*">
-<button onclick="document.getElementById('upload').click()">📁 Image</button>
-<div style="height: 30px; width: 2px; background: #555;"></div>
-<button id="btn-select" class="active" onclick="setMode('select')">🖱️ Sélection</button>
+<button onclick="document.getElementById('upload').click()">📁 Photo</button>
+<button id="btn-select" class="active" onclick="setMode('select')">🖱️ Bouger</button>
 <button id="btn-arrow" onclick="setMode('arrow')">↗️ Flèche</button>
 <button id="btn-text" onclick="setMode('text')">A| Texte</button>
-<div style="height: 30px; width: 2px; background: #555;"></div>
-<label>Couleur :</label>
+<input type="file" id="upload" style="display:none" accept="image/*">
+</div>
+<div class="controls">
+<div class="control-row">
+<label>Couleur</label>
 <input type="color" id="colorPicker" value="#ff0000">
-<button onclick="deleteObj()" style="background: #dc3545;">🗑️ Suppr.</button>
-<button onclick="download()" style="background: #28a745;">💾 Sauver</button>
+<button class="btn-del" onclick="deleteObj()" style="flex-grow:1; height: 50px;">🗑️ Effacer sélection</button>
+</div>
+<div class="control-row">
+<label>Épaisseur</label>
+<input type="range" id="sizeArrow" min="3" max="30" value="8">
+</div>
+<div class="control-row">
+<label>Taille Texte</label>
+<input type="range" id="sizeText" min="20" max="150" value="50">
+</div>
+<button class="btn-save" onclick="download()">💾 SAUVEGARDER L'IMAGE</button>
 </div>
 <div class="canvas-container">
 <canvas id="c"></canvas>
 </div>
-<div class="instr">Annoter Blech : Sélectionnez un objet pour le modifier. "Suppr" pour effacer.</div>
 <script>
 
-    let canvas = new fabric.Canvas('c');
+    let canvas = new fabric.Canvas('c', { stopPropagation: true });
 
     let mode = 'select';
 
@@ -55,9 +79,15 @@
 
         canvas.selection = (mode === 'select');
 
-        canvas.forEachObject(obj => obj.selectable = (mode === 'select'));
+        canvas.forEachObject(obj => {
 
-        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            obj.selectable = (mode === 'select');
+
+            obj.evented = (mode === 'select');
+
+        });
+
+        document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
 
         if(document.getElementById('btn-'+m)) document.getElementById('btn-'+m).classList.add('active');
 
@@ -71,7 +101,7 @@
 
             fabric.Image.fromURL(f.target.result, function(img) {
 
-                const ratio = Math.min((window.innerWidth*0.9)/img.width, (window.innerHeight*0.7)/img.height);
+                const ratio = Math.min((window.innerWidth)/img.width, (window.innerHeight * 0.6)/img.height);
 
                 canvas.setDimensions({ width: img.width * ratio, height: img.height * ratio });
 
@@ -95,19 +125,23 @@
 
         let color = document.getElementById('colorPicker').value;
 
+        let thickness = parseInt(document.getElementById('sizeArrow').value);
+
         if (mode === 'arrow') {
 
             let points = [pointer.x, pointer.y, pointer.x, pointer.y];
 
-            line = new fabric.Line(points, { strokeWidth: 5, fill: color, stroke: color, originX: 'center', originY: 'center', selectable: false });
+            line = new fabric.Line(points, { strokeWidth: thickness, fill: color, stroke: color, originX: 'center', originY: 'center', selectable: false });
 
-            arrow = new fabric.Triangle({ width: 20, height: 20, fill: color, left: pointer.x, top: pointer.y, originX: 'center', originY: 'center', angle: 90, selectable: false });
+            arrow = new fabric.Triangle({ width: thickness * 3, height: thickness * 3, fill: color, left: pointer.x, top: pointer.y, originX: 'center', originY: 'center', angle: 90, selectable: false });
 
             canvas.add(line, arrow);
 
         } else if (mode === 'text') {
 
-            let text = new fabric.IText('Texte...', { left: pointer.x, top: pointer.y, fill: color, fontSize: 30, fontFamily: 'Arial' });
+            let textSize = parseInt(document.getElementById('sizeText').value);
+
+            let text = new fabric.IText('À RÉPARER', { left: pointer.x, top: pointer.y, fill: color, fontSize: textSize, fontFamily: 'Arial', fontWeight: 'bold' });
 
             canvas.add(text);
 
@@ -126,8 +160,6 @@
         let pointer = canvas.getPointer(o.e);
 
         line.set({ x2: pointer.x, y2: pointer.y });
-
-        // Calcul de l'angle pour la pointe de la flèche
 
         let angle = Math.atan2(pointer.y - line.y1, pointer.x - line.x1) * 180 / Math.PI;
 
@@ -163,19 +195,13 @@
 
     }
 
-    document.addEventListener('keydown', (e) => {
-
-        if ((e.key === "Delete" || e.key === "Backspace") && !canvas.getActiveObject()?.isEditing) deleteObj();
-
-    });
-
     function download() {
 
         const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
 
         const link = document.createElement('a');
 
-        link.download = 'annoter-blech.png';
+        link.download = 'chantier-blech.png';
 
         link.href = dataURL;
 
