@@ -3,39 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Annoter Blech v14</title>
+<title>Annoter Blech v15</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
         body { 
 
-            font-family: sans-serif; background: #000; color: white; margin: 0; 
+            font-family: -apple-system, sans-serif; background: #000; color: white; margin: 0; 
 
             display: flex; flex-direction: column; height: 100vh; 
 
-            padding-top: env(safe-area-inset-top, 20px); box-sizing: border-box; overflow: hidden; 
+            padding-top: env(safe-area-inset-top, 25px); box-sizing: border-box; overflow: hidden; 
 
         }
 
-        .header-ui { background: #222; border-bottom: 1px solid #444; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+        /* HEADER AVEC DESIGN PRO */
 
-        .row { display: flex; gap: 3px; width: 100%; }
+        .header-ui { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
 
-        .row button { flex: 1; height: 42px; font-size: 11px; font-weight: bold; border-radius: 4px; border: 1px solid #555; background: #333; color: white; }
+        .row { display: flex; gap: 4px; width: 100%; }
 
-        button.active { background: #007bff; border-color: white; }
+        .row button { flex: 1; height: 44px; font-size: 11px; font-weight: 600; border-radius: 8px; border: none; background: #3a3a3c; color: white; text-transform: uppercase; }
 
-        .settings-bar { display: flex; align-items: center; gap: 5px; background: #2c2c2c; padding: 5px; border-radius: 4px; }
+        button.active { background: #007aff; color: white; box-shadow: 0 0 10px rgba(0,122,255,0.5); }
 
-        select { background: #444; color: white; border: 1px solid #666; height: 38px; border-radius: 4px; font-size: 11px; flex: 1.2; min-width: 100px; }
+        .settings-bar { display: flex; align-items: center; gap: 8px; background: #2c2c2e; padding: 6px 10px; border-radius: 10px; }
 
-        input[type="range"] { flex: 1.2; height: 25px; }
+        /* Style du bouton couleur (non écrasé) */
 
-        input[type="color"] { width: 35px; height: 35px; border: none; background: none; }
+        .color-wrapper { width: 38px; height: 38px; border-radius: 50%; border: 2px solid white; overflow: hidden; flex-shrink: 0; }
 
-        .btn-del { background: #dc3545 !important; border: none !important; width: 35px; }
+        input[type="color"] { border: none; width: 60px; height: 60px; cursor: pointer; transform: translate(-10px, -10px); background: none; }
 
-        .btn-save { background: #28a745 !important; border: none !important; flex: 0.8 !important; font-size: 11px !important; }
+        select { background: #3a3a3c; color: white; border: 1px solid #48484a; height: 38px; border-radius: 6px; font-size: 11px; flex: 1; outline: none; }
+
+        input[type="range"] { flex: 1; height: 20px; accent-color: #007aff; }
+
+        .btn-del { background: #ff3b30 !important; width: 40px; border-radius: 8px !important; }
+
+        .btn-save { background: #34c759 !important; flex: 1.2 !important; font-size: 12px !important; border-radius: 8px !important; }
 
         .canvas-container { flex: 1; width: 100%; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
@@ -51,9 +57,11 @@
 <button id="btn-text" onclick="setMode('text')">A| TEXTE</button>
 </div>
 <div class="settings-bar">
-<input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedStyle()">
+<div class="color-wrapper">
+<input type="color" id="colorPicker" value="#ff3b30" oninput="updateSelectedStyle()">
+</div>
 <select id="wordList" onchange="handleWordChange()">
-<option value="">-- CHOISIR --</option>
+<option value="">-- MOTS --</option>
 <option value="Chambre PB">Chambre PB</option>
 <option value="Chambre intermédiaire">Chambre intermédiaire</option>
 <option value="Regard client">Regard client</option>
@@ -63,7 +71,7 @@
 <option value="PB">PB</option>
 <option value="CUSTOM">➕ TEXTE PERSO</option>
 </select>
-<input type="range" id="sizeMain" min="4" max="80" value="15" oninput="updateSelectedStyle()">
+<input type="range" id="sizeMain" min="5" max="80" value="15" oninput="updateSelectedStyle()">
 <button class="btn-del" onclick="deleteObj()">🗑️</button>
 <button class="btn-save" onclick="download()">💾 SAUVER</button>
 </div>
@@ -80,9 +88,7 @@
 
     let isDrawing = false;
 
-    let arrow, line;
-
-    let customText = "";
+    let arrow, line, customText = "";
 
     function setMode(m) {
 
@@ -116,17 +122,7 @@
 
             let userVal = prompt("Entrez votre texte :");
 
-            if (userVal) {
-
-                customText = userVal;
-
-            } else {
-
-                select.value = "";
-
-                return;
-
-            }
+            if (userVal) customText = userVal; else return;
 
         }
 
@@ -214,7 +210,7 @@
 
         let select = document.getElementById('wordList');
 
-        let wordToAdd = select.value === "CUSTOM" ? customText : (select.value || "NOTE");
+        let wordToAdd = select.value === "CUSTOM" ? customText : (select.value || "TEXTE");
 
         if (mode === 'arrow') {
 
@@ -294,7 +290,7 @@
 
         const link = document.createElement('a');
 
-        link.download = 'chantier.png';
+        link.download = 'chantier_' + new Date().getTime() + '.png';
 
         link.href = dataURL;
 
