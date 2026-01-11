@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Annoter Blech V3</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<style>
+
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        .toolbar { background: #2c2c2c; padding: 10px; display: flex; justify-content: center; gap: 15px; align-items: center; border-bottom: 2px solid #444; }
+
+        button { background: #444; border: none; color: white; padding: 10px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+
+        button.active { background: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+
+        input[type="color"] { border: none; width: 40px; height: 40px; cursor: pointer; background: none; }
+
+        .canvas-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #000; overflow: auto; }
+
+        .instr { position: fixed; bottom: 10px; width: 100%; text-align: center; color: #666; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="toolbar">
+<input type="file" id="upload" style="display:none" accept="image/*">
+<button onclick="document.getElementById('upload').click()">📁 Image</button>
+<div style="height: 30px; width: 2px; background: #555;"></div>
+<button id="btn-select" class="active" onclick="setMode('select')">🖱️ Sélection</button>
+<button id="btn-arrow" onclick="setMode('arrow')">↗️ Flèche</button>
+<button id="btn-text" onclick="setMode('text')">A| Texte</button>
+<div style="height: 30px; width: 2px; background: #555;"></div>
+<label>Couleur :</label>
+<input type="color" id="colorPicker" value="#ff0000">
+<button onclick="deleteObj()" style="background: #dc3545;">🗑️ Suppr.</button>
+<button onclick="download()" style="background: #28a745;">💾 Sauver</button>
+</div>
+<div class="canvas-container">
+<canvas id="c"></canvas>
+</div>
+<div class="instr">Annoter Blech : Sélectionnez un objet pour le modifier. "Suppr" pour effacer.</div>
+<script>
+
+    let canvas = new fabric.Canvas('c');
+
+    let mode = 'select';
+
+    let isDrawing = false;
+
+    let arrow, line;
+
+    function setMode(m) {
+
+        mode = m;
+
+        canvas.selection = (mode === 'select');
+
+        canvas.forEachObject(obj => obj.selectable = (mode === 'select'));
+
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+
+        if(document.getElementById('btn-'+m)) document.getElementById('btn-'+m).classList.add('active');
+
+    }
+
+    document.getElementById('upload').onchange = function(e) {
+
+        const reader = new FileReader();
+
+        reader.onload = function(f) {
+
+            fabric.Image.fromURL(f.target.result, function(img) {
+
+                const ratio = Math.min((window.innerWidth*0.9)/img.width, (window.innerHeight*0.7)/img.height);
+
+                canvas.setDimensions({ width: img.width * ratio, height: img.height * ratio });
+
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), { scaleX: ratio, scaleY: ratio });
+
+            });
+
+        };
+
+        reader.readAsDataURL(e.target.files[0]);
+
+    };
+
+    canvas.on('mouse:down', function(o) {
+
+        if (mode === 'select') return;
+
+        isDrawing = true;
+
+        let pointer = canvas.getPointer(o.e);
+
+        let color = document.getElementById('colorPicker').value;
+
+        if (mode === 'arrow') {
+
+            let points = [pointer.x, pointer.y, pointer.x, pointer.y];
+
+            line = new fabric.Line(points, { strokeWidth: 5, fill: color, stroke: color, originX: 'center', originY: 'center', selectable: false });
+
+            arrow = new fabric.Triangle({ width: 20, height: 20, fill: color, left: pointer.x, top: pointer.y, originX: 'center', originY: 'center', angle: 90, selectable: false });
+
+            canvas.add(line, arrow);
+
+        } else if (mode === 'text') {
+
+            let text = new fabric.IText('Texte...', { left: pointer.x, top: pointer.y, fill: color, fontSize: 30, fontFamily: 'Arial' });
+
+            canvas.add(text);
+
+            setMode('select');
+
+            isDrawing = false;
+
+        }
+
+    });
+
+    canvas.on('mouse:move', function(o) {
+
+        if (!isDrawing || mode !== 'arrow') return;
+
+        let pointer = canvas.getPointer(o.e);
+
+        line.set({ x2: pointer.x, y2: pointer.y });
+
+        // Calcul de l'angle pour la pointe de la flèche
+
+        let angle = Math.atan2(pointer.y - line.y1, pointer.x - line.x1) * 180 / Math.PI;
+
+        arrow.set({ left: pointer.x, top: pointer.y, angle: angle + 90 });
+
+        canvas.renderAll();
+
+    });
+
+    canvas.on('mouse:up', function() {
+
+        if (mode === 'arrow' && isDrawing) {
+
+            let group = new fabric.Group([line, arrow], { selectable: true });
+
+            canvas.remove(line, arrow);
+
+            canvas.add(group);
+
+            setMode('select');
+
+        }
+
+        isDrawing = false;
+
+    });
+
+    function deleteObj() {
+
+        canvas.getActiveObjects().forEach(obj => canvas.remove(obj));
+
+        canvas.discardActiveObject().renderAll();
+
+    }
+
+    document.addEventListener('keydown', (e) => {
+
+        if ((e.key === "Delete" || e.key === "Backspace") && !canvas.getActiveObject()?.isEditing) deleteObj();
+
+    });
+
+    function download() {
+
+        const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
+
+        const link = document.createElement('a');
+
+        link.download = 'annoter-blech.png';
+
+        link.href = dataURL;
+
+        link.click();
+
+    }
+</script>
+</body>
+</html>
+ 
