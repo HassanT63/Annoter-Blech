@@ -3,49 +3,93 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1c1c1e">
-<title>Annoter Blech</title>
+<title>Annoter Blech v25</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
-        /* Garde le même style que la V22 */
+        body { 
 
-        body { font-family: -apple-system, sans-serif; background: #000; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+            font-family: -apple-system, sans-serif; background: #000; color: white; margin: 0; 
 
-        .header-ui { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
 
-        .row { display: flex; gap: 3px; }
+        }
 
-        .row button { flex: 1; height: 40px; font-size: 11px; font-weight: 700; border-radius: 6px; border: none; background: #3a3a3c; color: white; }
+        /* En-tête compacte */
 
-        button.active { background: #007aff; }
+        .header-ui { background: #1c1c1e; padding: 5px; border-bottom: 1px solid #38383a; }
 
-        .settings-bar { display: flex; align-items: center; gap: 5px; background: #2c2c2e; padding: 4px; border-radius: 8px; }
+        /* Ligne 1 : Outils principaux */
 
-        .color-wrapper { width: 32px; height: 32px; border-radius: 50%; border: 2px solid white; overflow: hidden; flex-shrink: 0; position: relative; }
+        .row-tools { display: flex; gap: 4px; margin-bottom: 5px; }
 
-        input[type="color"] { position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; border: none; cursor: pointer; background: none; }
+        .row-tools button { 
 
-        select { background: #3a3a3c; color: white; border: 1px solid #48484a; height: 34px; border-radius: 4px; font-size: 10px; flex: 1; }
+            flex: 1; height: 42px; border-radius: 8px; border: none; 
 
-        input[type="range"] { flex: 0.8; height: 20px; accent-color: #007aff; }
+            background: #3a3a3c; color: white; font-weight: bold; font-size: 11px;
 
-        .btn-del { background: #ff3b30 !important; width: 34px !important; height: 34px !important; }
+        }
 
-        .btn-save { background: #34c759 !important; height: 34px !important; flex: 0.7 !important; font-size: 10px !important; }
+        button.active { background: #007aff !important; }
 
-        .canvas-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; }
+        /* Ligne 2 : Réglages - On utilise flexbox pour que rien ne déborde */
+
+        .settings-bar { 
+
+            display: flex; align-items: center; gap: 6px; 
+
+            background: #2c2c2e; padding: 6px; border-radius: 10px;
+
+        }
+
+        .color-wrapper { 
+
+            width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff; 
+
+            position: relative; overflow: hidden; flex-shrink: 0;
+
+        }
+
+        input[type="color"] { position: absolute; top: -10px; left: -10px; width: 60px; height: 60px; cursor: pointer; }
+
+        select { 
+
+            background: #3a3a3c; color: white; border: 1px solid #48484a; 
+
+            height: 34px; border-radius: 6px; font-size: 11px; flex: 1; min-width: 0; 
+
+        }
+
+        input[type="range"] { flex: 0.6; accent-color: #007aff; min-width: 50px; }
+
+        .btn-del { background: #ff3b30 !important; width: 34px; height: 34px; border-radius: 6px; border: none; flex-shrink: 0; font-size: 16px; }
+
+        /* Bouton SAUVER forcé à droite et bien dimensionné */
+
+        .btn-save { 
+
+            background: #34c759 !important; color: white; height: 34px; border-radius: 6px; 
+
+            border: none; font-weight: bold; font-size: 11px; padding: 0 8px; flex-shrink: 0;
+
+        }
+
+        .canvas-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; background: #000; position: relative; }
+
+        canvas { touch-action: none; }
 
         #saveModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
 
-        #saveModal img { max-width: 90%; max-height: 75%; border: 3px solid #007aff; border-radius: 10px; }
+        #saveModal img { max-width: 90%; max-height: 70%; border: 2px solid white; border-radius: 10px; }
 </style>
 </head>
 <body>
 <div class="header-ui">
-<div class="row">
+<div class="row-tools">
 <button onclick="document.getElementById('upload').click()">📁 PHOTO</button>
 <button id="btn-select" class="active" onclick="setMode('select')">🖱️ BOUGER</button>
 <button id="btn-arrow" onclick="setMode('arrow')">↗️ FLÈCHE</button>
@@ -54,13 +98,12 @@
 <div class="settings-bar">
 <div class="color-wrapper"><input type="color" id="colorPicker" value="#ff3b30" oninput="updateSelectedStyle()"></div>
 <select id="wordList" onchange="handleWordChange()">
-<option value="">-- MOTS --</option>
+<option value="">MOTS</option>
 <option value="Chambre PB">Chambre PB</option>
 <option value="Chambre intermédiaire">Chambre intermédiaire</option>
 <option value="Regard client">Regard client</option>
 <option value="Adduction">Adduction</option>
 <option value="Maison client">Maison client</option>
-<option value="Adduction poteau">Adduction poteau</option>
 <option value="PB">PB</option>
 <option value="CUSTOM">➕ PERSO</option>
 </select>
@@ -72,13 +115,13 @@
 <div class="canvas-container" id="wrapper"><canvas id="c"></canvas></div>
 <input type="file" id="upload" style="display:none" accept="image/*">
 <div id="saveModal">
-<p>📱 <b>SAUVEGARDE</b></p>
+<p style="text-align:center">📱 <b>SAUVEGARDE IPHONE</b><br>Appui long sur l'image</p>
 <img id="resultImage" src="">
-<button style="margin-top:15px; padding:12px 25px; border-radius:8px; background:#3a3a3c; color:white; border:none;" onclick="closeModal()">RETOUR</button>
+<button style="margin-top:20px; padding:12px 25px; background:#555; color:white; border:none; border-radius:8px;" onclick="closeModal()">RETOUR</button>
 </div>
 <script>
 
-    // --- LE SCRIPT POUR LE MODE HORS-LIGNE ---
+    // Inscription du Service Worker pour le mode Hors-Ligne
 
     if ('serviceWorker' in navigator) {
 
@@ -86,7 +129,7 @@
 
             navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(`
 
-                const cacheName = 'blech-v1';
+                const cacheName = 'blech-v25';
 
                 self.addEventListener('install', e => {
 
@@ -106,8 +149,6 @@
 
     }
 
-    // --- TON CODE DE DESSIN HABITUEL ---
-
     let canvas = new fabric.Canvas('c', { stopPropagation: true, preserveObjectStacking: true });
 
     let mode = 'select', isDrawing = false, arrow, line, customText = "";
@@ -120,7 +161,7 @@
 
         canvas.forEachObject(obj => { obj.selectable = (mode === 'select'); obj.evented = (mode === 'select'); });
 
-        document.querySelectorAll('.row button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.row-tools button').forEach(b => b.classList.remove('active'));
 
         if(document.getElementById('btn-'+m)) document.getElementById('btn-'+m).classList.add('active');
 
@@ -130,11 +171,7 @@
 
         let select = document.getElementById('wordList');
 
-        let val = select.value;
-
-        if (!val) return;
-
-        if (val === "CUSTOM") {
+        if (select.value === "CUSTOM") {
 
             let userVal = prompt("Texte :");
 
@@ -146,7 +183,7 @@
 
         if (activeObj && activeObj.type === 'i-text') {
 
-            activeObj.set({ text: val === "CUSTOM" ? customText : val });
+            activeObj.set({ text: select.value === "CUSTOM" ? customText : select.value });
 
             canvas.renderAll();
 
@@ -220,15 +257,11 @@
 
         let thickness = parseInt(document.getElementById('sizeMain').value);
 
-        let select = document.getElementById('wordList');
-
-        let wordToAdd = select.value === "CUSTOM" ? customText : (select.value || "TEXTE");
+        let wordToAdd = document.getElementById('wordList').value === "CUSTOM" ? customText : (document.getElementById('wordList').value || "TEXTE");
 
         if (mode === 'arrow') {
 
-            let points = [pointer.x, pointer.y, pointer.x, pointer.y];
-
-            line = new fabric.Line(points, { strokeWidth: thickness, stroke: color, originX: 'center', originY: 'center', selectable: false });
+            line = new fabric.Line([pointer.x, pointer.y, pointer.x, pointer.y], { strokeWidth: thickness, stroke: color, selectable: false });
 
             arrow = new fabric.Triangle({ width: thickness * 4, height: thickness * 4, fill: color, left: pointer.x, top: pointer.y, originX: 'center', originY: 'center', angle: 90, selectable: false });
 
@@ -236,7 +269,7 @@
 
         } else if (mode === 'text') {
 
-            let text = new fabric.IText(wordToAdd, { left: pointer.x, top: pointer.y, fill: color, fontSize: thickness * 5, fontFamily: 'Arial', fontWeight: 'bold' });
+            let text = new fabric.IText(wordToAdd, { left: pointer.x, top: pointer.y, fill: color, fontSize: thickness * 5, fontWeight: 'bold' });
 
             canvas.add(text);
 
@@ -268,13 +301,11 @@
 
         if (mode === 'arrow' && isDrawing) {
 
-            let group = new fabric.Group([line, arrow], { selectable: true, objectCaching: false });
+            let group = new fabric.Group([line, arrow], { selectable: true });
 
             canvas.remove(line, arrow);
 
             canvas.add(group);
-
-            canvas.setActiveObject(group);
 
             setMode('select');
 
@@ -312,7 +343,7 @@
 
             const link = document.createElement('a');
 
-            link.download = 'chantier_' + new Date().getTime() + '.png';
+            link.download = 'blech_' + new Date().getTime() + '.png';
 
             link.href = dataURL;
 
