@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Annoter Blech v12</title>
+<title>Annoter Blech v14</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
@@ -17,49 +17,27 @@
 
         }
 
-        /* Menu compact pour laisser place à l'image */
-
-        .header-ui { 
-
-            background: #222; border-bottom: 1px solid #444; 
-
-            padding: 4px; display: flex; flex-direction: column; gap: 4px; 
-
-        }
+        .header-ui { background: #222; border-bottom: 1px solid #444; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
 
         .row { display: flex; gap: 3px; width: 100%; }
 
-        .row button { flex: 1; height: 42px; font-size: 12px; font-weight: bold; border-radius: 4px; border: 1px solid #555; background: #333; color: white; }
+        .row button { flex: 1; height: 42px; font-size: 11px; font-weight: bold; border-radius: 4px; border: 1px solid #555; background: #333; color: white; }
 
         button.active { background: #007bff; border-color: white; }
 
-        .settings-bar { 
+        .settings-bar { display: flex; align-items: center; gap: 5px; background: #2c2c2c; padding: 5px; border-radius: 4px; }
 
-            display: flex; align-items: center; gap: 8px; 
+        select { background: #444; color: white; border: 1px solid #666; height: 38px; border-radius: 4px; font-size: 11px; flex: 1.2; min-width: 100px; }
 
-            background: #2c2c2c; padding: 5px 8px; border-radius: 4px; 
-
-        }
-
-        input[type="range"] { flex: 1; height: 25px; }
+        input[type="range"] { flex: 1.2; height: 25px; }
 
         input[type="color"] { width: 35px; height: 35px; border: none; background: none; }
 
-        .btn-del { background: #dc3545 !important; border: none !important; width: 40px; }
+        .btn-del { background: #dc3545 !important; border: none !important; width: 35px; }
 
-        .btn-save { background: #28a745 !important; border: none !important; flex: 1.5 !important; font-size: 13px !important; }
+        .btn-save { background: #28a745 !important; border: none !important; flex: 0.8 !important; font-size: 11px !important; }
 
-        /* ZONE IMAGE : UTILISE 100% DE L'ESPACE RESTANT */
-
-        .canvas-container { 
-
-            flex: 1; width: 100%; background: #000; 
-
-            display: flex; justify-content: center; align-items: center; 
-
-            overflow: hidden; position: relative; 
-
-        }
+        .canvas-container { flex: 1; width: 100%; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
         canvas { touch-action: none; }
 </style>
@@ -74,7 +52,18 @@
 </div>
 <div class="settings-bar">
 <input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedStyle()">
-<input type="range" id="sizeMain" min="4" max="70" value="12" oninput="updateSelectedStyle()">
+<select id="wordList" onchange="handleWordChange()">
+<option value="">-- CHOISIR --</option>
+<option value="Chambre PB">Chambre PB</option>
+<option value="Chambre intermédiaire">Chambre intermédiaire</option>
+<option value="Regard client">Regard client</option>
+<option value="Adduction">Adduction</option>
+<option value="Maison client">Maison client</option>
+<option value="Adduction poteau">Adduction poteau</option>
+<option value="PB">PB</option>
+<option value="CUSTOM">➕ TEXTE PERSO</option>
+</select>
+<input type="range" id="sizeMain" min="4" max="80" value="15" oninput="updateSelectedStyle()">
 <button class="btn-del" onclick="deleteObj()">🗑️</button>
 <button class="btn-save" onclick="download()">💾 SAUVER</button>
 </div>
@@ -93,6 +82,8 @@
 
     let arrow, line;
 
+    let customText = "";
+
     function setMode(m) {
 
         mode = m;
@@ -110,6 +101,50 @@
         document.querySelectorAll('.row button').forEach(b => b.classList.remove('active'));
 
         if(document.getElementById('btn-'+m)) document.getElementById('btn-'+m).classList.add('active');
+
+    }
+
+    function handleWordChange() {
+
+        let select = document.getElementById('wordList');
+
+        let val = select.value;
+
+        if (!val) return;
+
+        if (val === "CUSTOM") {
+
+            let userVal = prompt("Entrez votre texte :");
+
+            if (userVal) {
+
+                customText = userVal;
+
+            } else {
+
+                select.value = "";
+
+                return;
+
+            }
+
+        }
+
+        let activeObj = canvas.getActiveObject();
+
+        if (activeObj && activeObj.type === 'i-text') {
+
+            activeObj.set({ text: val === "CUSTOM" ? customText : val });
+
+            updateSelectedStyle();
+
+            canvas.renderAll();
+
+        } else {
+
+            setMode('text');
+
+        }
 
     }
 
@@ -151,19 +186,11 @@
 
                 const wrapper = document.getElementById('wrapper');
 
-                const availableWidth = wrapper.clientWidth;
-
-                const availableHeight = wrapper.clientHeight;
-
-                const ratio = Math.min(availableWidth / img.width, availableHeight / img.height);
+                const ratio = Math.min(wrapper.clientWidth / img.width, wrapper.clientHeight / img.height);
 
                 canvas.setDimensions({ width: img.width * ratio, height: img.height * ratio });
 
-                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), { 
-
-                    scaleX: ratio, scaleY: ratio, originX: 'left', originY: 'top' 
-
-                });
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), { scaleX: ratio, scaleY: ratio });
 
             });
 
@@ -185,6 +212,10 @@
 
         let thickness = parseInt(document.getElementById('sizeMain').value);
 
+        let select = document.getElementById('wordList');
+
+        let wordToAdd = select.value === "CUSTOM" ? customText : (select.value || "NOTE");
+
         if (mode === 'arrow') {
 
             let points = [pointer.x, pointer.y, pointer.x, pointer.y];
@@ -197,7 +228,7 @@
 
         } else if (mode === 'text') {
 
-            let text = new fabric.IText('NOTES', { left: pointer.x, top: pointer.y, fill: color, fontSize: thickness * 4, fontFamily: 'Arial', fontWeight: 'bold' });
+            let text = new fabric.IText(wordToAdd, { left: pointer.x, top: pointer.y, fill: color, fontSize: thickness * 4, fontFamily: 'Arial', fontWeight: 'bold' });
 
             canvas.add(text);
 
