@@ -2,39 +2,59 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Annoter Blech v6</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Annoter Blech v7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
+        :root { --safe-bottom: env(safe-area-inset-bottom, 20px); }
+
         body { font-family: sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        .toolbar { background: #222; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; border-bottom: 2px solid #444; }
+        /* Barre d'outils principale */
 
-        button { background: #333; border: 1px solid #555; color: white; height: 45px; font-size: 14px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .toolbar { background: #222; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px 5px; border-bottom: 2px solid #444; }
+
+        button { background: #333; border: 1px solid #555; color: white; height: 45px; font-size: 14px; border-radius: 6px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 
         button.active { background: #007bff; border-color: #fff; }
 
-        .controls { background: #2c2c2c; padding: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; }
+        /* Réglages */
 
-        .control-group { display: flex; align-items: center; gap: 5px; flex: 1; }
+        .controls { background: #2c2c2c; padding: 10px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #444; }
 
-        input[type="range"] { width: 100%; height: 20px; }
+        input[type="range"] { flex: 1; height: 30px; }
 
-        input[type="color"] { width: 35px; height: 35px; border: none; background: none; padding: 0; cursor: pointer; }
+        input[type="color"] { width: 40px; height: 40px; border: none; background: none; padding: 0; }
 
-        .canvas-container { flex-grow: 1; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        .canvas-container { flex: 1; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; }
 
-        .footer-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 5px; padding: 5px; background: #222; }
+        /* Barre d'actions basse - Remontée pour accessibilité */
 
-        .btn-del { background: #dc3545; height: 45px; }
+        .footer-actions { 
 
-        .btn-save { background: #28a745; height: 45px; }
+            display: grid; 
+
+            grid-template-columns: 1fr 2fr; 
+
+            gap: 10px; 
+
+            padding: 15px 10px calc(15px + var(--safe-bottom)); 
+
+            background: #222; 
+
+            border-top: 2px solid #444;
+
+        }
+
+        .btn-del { background: #dc3545; height: 50px; }
+
+        .btn-save { background: #28a745; height: 50px; font-size: 18px; }
 </style>
 </head>
 <body>
 <div class="toolbar">
-<button onclick="document.getElementById('upload').click()">📁 Photo</button>
+<button onclick="document.getElementById('upload').click()">📁 Image</button>
 <button id="btn-select" class="active" onclick="setMode('select')">🖱️ Bouger</button>
 <button id="btn-arrow" onclick="setMode('arrow')">↗️ Flèche</button>
 <button id="btn-text" onclick="setMode('text')">A| Texte</button>
@@ -42,16 +62,14 @@
 </div>
 <div class="controls">
 <input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedStyle()">
-<div class="control-group">
-<span>📏</span>
-<input type="range" id="sizeMain" min="3" max="50" value="8" oninput="updateSelectedStyle()">
-</div>
+<span style="font-size: 20px;">📏</span>
+<input type="range" id="sizeMain" min="4" max="50" value="10" oninput="updateSelectedStyle()">
 </div>
 <div class="canvas-container">
 <canvas id="c"></canvas>
 </div>
 <div class="footer-actions">
-<button class="btn-del" onclick="deleteObj()">🗑️ SUPPRIMER</button>
+<button class="btn-del" onclick="deleteObj()">🗑️ SUPPR.</button>
 <button class="btn-save" onclick="download()">💾 SAUVEGARDER</button>
 </div>
 <script>
@@ -84,8 +102,6 @@
 
     }
 
-    // Mise à jour dynamique de la couleur et de la taille
-
     function updateSelectedStyle() {
 
         let activeObjects = canvas.getActiveObjects();
@@ -96,13 +112,13 @@
 
         activeObjects.forEach(obj => {
 
-            if (obj.type === 'group') { // C'est une flèche
+            if (obj.type === 'group') {
 
-                obj.item(0).set({ stroke: color, strokeWidth: size }); // La ligne
+                obj.item(0).set({ stroke: color, strokeWidth: size });
 
-                obj.item(1).set({ fill: color, width: size*3, height: size*3 }); // La pointe
+                obj.item(1).set({ fill: color, width: size*3, height: size*3 });
 
-            } else if (obj.type === 'i-text') { // C'est du texte
+            } else if (obj.type === 'i-text') {
 
                 obj.set({ fill: color, fontSize: size * 4 });
 
@@ -122,7 +138,13 @@
 
             fabric.Image.fromURL(f.target.result, function(img) {
 
-                const availableHeight = window.innerHeight - 150; 
+                // On calcule l'espace réel disponible entre les barres hautes et basses
+
+                const topH = document.querySelector('.toolbar').offsetHeight + document.querySelector('.controls').offsetHeight;
+
+                const botH = document.querySelector('.footer-actions').offsetHeight;
+
+                const availableHeight = window.innerHeight - topH - botH - 20;
 
                 const ratio = Math.min(window.innerWidth / img.width, availableHeight / img.height);
 
@@ -217,14 +239,6 @@
         canvas.discardActiveObject().renderAll();
 
     }
-
-    // Support de la touche Suppr clavier
-
-    document.addEventListener('keydown', (e) => {
-
-        if ((e.key === "Delete" || e.key === "Backspace") && !canvas.getActiveObject()?.isEditing) deleteObj();
-
-    });
 
     function download() {
 
