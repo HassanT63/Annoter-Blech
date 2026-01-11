@@ -3,21 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Annoter Blech v5</title>
+<title>Annoter Blech v6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <style>
 
         body { font-family: sans-serif; background: #121212; color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* Toolbar fine mais large pour les doigts */
-
         .toolbar { background: #222; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 5px; border-bottom: 2px solid #444; }
 
-        button { background: #333; border: 1px solid #555; color: white; height: 45px; font-size: 14px; border-radius: 4px; font-weight: bold; }
+        button { background: #333; border: 1px solid #555; color: white; height: 45px; font-size: 14px; border-radius: 4px; font-weight: bold; cursor: pointer; }
 
         button.active { background: #007bff; border-color: #fff; }
-
-        /* Réglages compacts sur une ligne */
 
         .controls { background: #2c2c2c; padding: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; }
 
@@ -25,15 +21,15 @@
 
         input[type="range"] { width: 100%; height: 20px; }
 
-        input[type="color"] { width: 35px; height: 35px; border: none; background: none; padding: 0; }
+        input[type="color"] { width: 35px; height: 35px; border: none; background: none; padding: 0; cursor: pointer; }
 
         .canvas-container { flex-grow: 1; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
 
         .footer-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 5px; padding: 5px; background: #222; }
 
-        .btn-del { background: #dc3545; height: 40px; }
+        .btn-del { background: #dc3545; height: 45px; }
 
-        .btn-save { background: #28a745; height: 40px; }
+        .btn-save { background: #28a745; height: 45px; }
 </style>
 </head>
 <body>
@@ -45,26 +41,22 @@
 <input type="file" id="upload" style="display:none" accept="image/*">
 </div>
 <div class="controls">
-<input type="color" id="colorPicker" value="#ff0000">
+<input type="color" id="colorPicker" value="#ff0000" oninput="updateSelectedStyle()">
 <div class="control-group">
 <span>📏</span>
-<input type="range" id="sizeArrow" min="3" max="25" value="6">
-</div>
-<div class="control-group">
-<span>Taille A</span>
-<input type="range" id="sizeText" min="20" max="120" value="40">
+<input type="range" id="sizeMain" min="3" max="50" value="8" oninput="updateSelectedStyle()">
 </div>
 </div>
 <div class="canvas-container">
 <canvas id="c"></canvas>
 </div>
 <div class="footer-actions">
-<button class="btn-del" onclick="deleteObj()">🗑️ Suppr.</button>
+<button class="btn-del" onclick="deleteObj()">🗑️ SUPPRIMER</button>
 <button class="btn-save" onclick="download()">💾 SAUVEGARDER</button>
 </div>
 <script>
 
-    let canvas = new fabric.Canvas('c', { stopPropagation: true });
+    let canvas = new fabric.Canvas('c', { stopPropagation: true, preserveObjectStacking: true });
 
     let mode = 'select';
 
@@ -92,6 +84,36 @@
 
     }
 
+    // Mise à jour dynamique de la couleur et de la taille
+
+    function updateSelectedStyle() {
+
+        let activeObjects = canvas.getActiveObjects();
+
+        let color = document.getElementById('colorPicker').value;
+
+        let size = parseInt(document.getElementById('sizeMain').value);
+
+        activeObjects.forEach(obj => {
+
+            if (obj.type === 'group') { // C'est une flèche
+
+                obj.item(0).set({ stroke: color, strokeWidth: size }); // La ligne
+
+                obj.item(1).set({ fill: color, width: size*3, height: size*3 }); // La pointe
+
+            } else if (obj.type === 'i-text') { // C'est du texte
+
+                obj.set({ fill: color, fontSize: size * 4 });
+
+            }
+
+        });
+
+        canvas.renderAll();
+
+    }
+
     document.getElementById('upload').onchange = function(e) {
 
         const reader = new FileReader();
@@ -100,7 +122,7 @@
 
             fabric.Image.fromURL(f.target.result, function(img) {
 
-                const availableHeight = window.innerHeight - 160; 
+                const availableHeight = window.innerHeight - 150; 
 
                 const ratio = Math.min(window.innerWidth / img.width, availableHeight / img.height);
 
@@ -126,7 +148,7 @@
 
         let color = document.getElementById('colorPicker').value;
 
-        let thickness = parseInt(document.getElementById('sizeArrow').value);
+        let thickness = parseInt(document.getElementById('sizeMain').value);
 
         if (mode === 'arrow') {
 
@@ -140,9 +162,7 @@
 
         } else if (mode === 'text') {
 
-            let textSize = parseInt(document.getElementById('sizeText').value);
-
-            let text = new fabric.IText('NOTES', { left: pointer.x, top: pointer.y, fill: color, fontSize: textSize, fontFamily: 'Arial', fontWeight: 'bold' });
+            let text = new fabric.IText('NOTES', { left: pointer.x, top: pointer.y, fill: color, fontSize: thickness * 4, fontFamily: 'Arial', fontWeight: 'bold' });
 
             canvas.add(text);
 
@@ -180,6 +200,8 @@
 
             canvas.add(group);
 
+            canvas.setActiveObject(group);
+
             setMode('select');
 
         }
@@ -196,7 +218,19 @@
 
     }
 
+    // Support de la touche Suppr clavier
+
+    document.addEventListener('keydown', (e) => {
+
+        if ((e.key === "Delete" || e.key === "Backspace") && !canvas.getActiveObject()?.isEditing) deleteObj();
+
+    });
+
     function download() {
+
+        canvas.discardActiveObject();
+
+        canvas.renderAll();
 
         const dataURL = canvas.toDataURL({ format: 'png', quality: 1 });
 
